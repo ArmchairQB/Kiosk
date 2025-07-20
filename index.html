@@ -708,12 +708,23 @@
         }
 
         function filterTable() {
-            const searchTerm = document.getElementById('searchBox').value.toLowerCase();
+            const searchTerm = document.getElementById('searchBox').value.toLowerCase().trim();
             const rows = document.querySelectorAll('#inventoryBody tr');
             
             rows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(searchTerm) ? '' : 'none';
+                // Only search in product name (2nd column input) and category (1st column select)
+                const nameInput = row.querySelector('td:nth-child(2) input');
+                const categorySelect = row.querySelector('td:nth-child(1) select');
+                
+                if (nameInput && categorySelect) {
+                    const productName = nameInput.value.toLowerCase();
+                    const category = categorySelect.value.toLowerCase();
+                    
+                    const matchesSearch = productName.includes(searchTerm) || 
+                                        category.includes(searchTerm);
+                    
+                    row.style.display = matchesSearch ? '' : 'none';
+                }
             });
         }
 
