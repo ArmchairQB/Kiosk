@@ -3,816 +3,342 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sophien Post und Shop - Lagerverwaltung</title>
+    <title>Einkaufsliste - Sophien Post und Shop</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f5f5f5;
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; background-color: #f4f4f9; color: #333; }
+        .container { display: flex; max-width: 1300px; margin: 20px auto; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); overflow: hidden; height: calc(100vh - 40px); }
+        .panel { padding: 20px; overflow-y: auto; display: flex; flex-direction: column; }
+        .panel-left { width: 45%; border-right: 1px solid #e0e0e0; }
+        .panel-right { width: 55%; }
+        h1, h2, h3 { color: #2c3e50; }
+        h1 { text-align: center; margin-top: 0; }
+        .search-box, .form-input { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        
+        #category-tabs { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #3498db; }
+        .category-tab { background: #ecf0f1; border: 1px solid #ccc; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+        .category-tab.active, .category-tab:hover { background-color: #3498db; color: white; border-color: #2980b9; }
+
+        #catalog-content { flex-grow: 1; overflow-y: auto; }
+        .item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #f0f0f0; }
+        .item:hover { background-color: #f9f9f9; }
+
+        .btn { background: #3498db; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; transition: background 0.2s; font-size: 14px; }
+        .btn:hover { background: #2980b9; }
+        .btn-add { background-color: #2ecc71; }
+        .btn-add:hover { background-color: #27ae60; }
+        .btn-danger { background-color: #e74c3c; }
+        .btn-danger:hover { background-color: #c0392b; }
+
+        #shopping-list-items { padding: 0; margin: 0; list-style-type: none; flex-grow: 1; overflow-y: auto; }
+        #shopping-list-items li { display: grid; grid-template-columns: 1fr 100px 1fr 50px; gap: 10px; align-items: center; margin-bottom: 10px; }
+        #shopping-list-items input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        
+        .list-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; border-top: 1px solid #e0e0e0; padding-top: 20px; }
+        .add-to-catalog-form { display: grid; gap: 10px; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ccc; }
+        
+        @media (max-width: 768px) {
+            body { -webkit-text-size-adjust: 100%; }
+            .container { flex-direction: column; height: auto; margin: 0; border-radius: 0; }
+            .panel-left, .panel-right { width: 100%; box-sizing: border-box; border-right: none; border-bottom: 1px solid #e0e0e0; max-height: 60vh; }
+            .list-actions { flex-direction: column; align-items: stretch; }
+            #shopping-list-items li { grid-template-columns: 1fr; gap: 8px; padding: 15px 0; border-bottom: 1px solid #eee; }
+            h2 { font-size: 1.2rem; }
+            h3 { font-size: 1.1rem; }
+            #category-tabs { flex-wrap: nowrap; overflow-x: auto; }
         }
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            overflow: hidden;
+
+        @media print {
+            body { background-color: white; }
+            .container, .panel-left, .list-actions, .list-item-remove-btn { display: none; }
+            #print-area { display: block !important; }
+            h2, h3 { margin: 20px 0 10px 0; }
+            table { width: 100%; border-collapse: collapse; }
+            th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+            th { background-color: #f2f2f2; }
         }
-        .header {
-            background: #2c3e50;
-            color: white;
-            padding: 20px;
-            text-align: center;
-        }
-        .tabs {
-            display: flex;
-            background: #34495e;
-            overflow-x: auto;
-        }
-        .tab {
-            padding: 15px 20px;
-            background: #34495e;
-            color: white;
-            border: none;
-            cursor: pointer;
-            white-space: nowrap;
-            transition: background 0.3s;
-        }
-        .tab:hover, .tab.active {
-            background: #2c3e50;
-        }
-        .tab-content {
-            display: none;
-            padding: 20px;
-        }
-        .tab-content.active {
-            display: block;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-            font-size: 14px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        th {
-            background-color: #f8f9fa;
-            font-weight: bold;
-            position: sticky;
-            top: 0;
-        }
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-        .category-header {
-            background-color: #e3f2fd !important;
-            font-weight: bold;
-            color: #1976d2;
-        }
-        input[type="number"], input[type="text"], select {
-            width: 100%;
-            padding: 4px;
-            border: 1px solid #ddd;
-            border-radius: 3px;
-        }
-        .low-stock {
-            background-color: #ffebee !important;
-        }
-        .out-of-stock {
-            background-color: #f3e5f5 !important;
-        }
-        .btn {
-            background: #3498db;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin: 5px;
-        }
-        .btn:hover {
-            background: #2980b9;
-        }
-        .btn-success {
-            background: #27ae60;
-        }
-        .btn-success:hover {
-            background: #229954;
-        }
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin: 20px 0;
-        }
-        .stat-card {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 5px;
-            text-align: center;
-        }
-        .shopping-list {
-            background: #fff3cd;
-            padding: 15px;
-            border-radius: 5px;
-            margin: 10px 0;
-        }
-        .vat-7 { background-color: #e8f5e8; }
-        .vat-19 { background-color: #fff2e8; }
-        .seasonal-item { border-left: 4px solid #ff9800; }
-        .consignment-item { border-left: 4px solid #9c27b0; }
-        .search-box {
-            width: 300px;
-            padding: 8px;
-            margin: 10px 0;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        .supplier-selgros { color: #e74c3c; font-weight: bold; }
-        .supplier-metro { color: #3498db; font-weight: bold; }
-        .supplier-konsignment { color: #9b59b6; font-weight: bold; }
     </style>
 </head>
 <body>
+
     <div class="container">
-        <div class="header">
-            <h1>Sophien Post und Shop</h1>
-            <p>Lagerverwaltungssystem - Frankfurt am Main</p>
-        </div>
-        
-        <div class="tabs">
-            <button class="tab active" onclick="showTab('inventory')">Hauptlager</button>
-            <button class="tab" onclick="showTab('consignment')">Konsignationsware</button>
-            <button class="tab" onclick="showTab('stock-update')">Bestandsupdate</button>
-            <button class="tab" onclick="showTab('shopping-list')">Einkaufsliste</button>
-            <button class="tab" onclick="showTab('seasonal')">Saisonware</button>
-            <button class="tab" onclick="showTab('reports')">Berichte</button>
-        </div>
-
-        <div id="inventory" class="tab-content active">
-            <h2>Hauptlager - Warenbestand</h2>
-            <input type="text" id="searchBox" class="search-box" placeholder="Artikel suchen..." onkeyup="filterTable()">
-            <button class="btn" onclick="addNewProduct()">Neuer Artikel</button>
-            <button class="btn btn-success" onclick="saveInventory()">Änderungen speichern</button>
+        <div class="panel panel-left">
+            <h2>🛒 Artikelkatalog</h2>
+            <input type="text" id="searchBox" class="search-box" placeholder="Alle Kategorien durchsuchen...">
             
-            <div style="overflow-x: auto; max-height: 600px;">
-                <table id="inventoryTable">
-                    <thead>
-                        <tr>
-                            <th>Kategorie</th>
-                            <th>Artikelname</th>
-                            <th>Aktueller Bestand</th>
-                            <th>Mindestbestand</th>
-                            <th>Maximalbestand</th>
-                            <th>EK-Preis (€)</th>
-                            <th>VK-Preis (€)</th>
-                            <th>MwSt %</th>
-                            <th>Lieferant</th>
-                            <th>Notizen</th>
-                            <th>Aktion</th>
-                        </tr>
-                    </thead>
-                    <tbody id="inventoryBody">
-                        </tbody>
-                </table>
+            <div id="category-tabs"></div>
+            <div id="catalog-content"></div>
+
+            <div class="add-to-catalog-form">
+                <h3>Neuen Artikel zum Katalog hinzufügen</h3>
+                <input type="text" id="newItemName" class="form-input" placeholder="Artikelname (z.B. Fanta 0,5l)">
+                <input type="text" id="newItemSupplier" class="form-input" placeholder="Lieferant (z.B. Metro)">
+                <select id="newItemCategory" class="form-input"></select>
+                <button class="btn btn-add" id="addItemToCatalogBtn">Zum Katalog hinzufügen</button>
             </div>
         </div>
 
-        <div id="consignment" class="tab-content">
-            <h2>Konsignationsware</h2>
-            <button class="btn" onclick="addNewConsignmentProduct()">Neuer Konsignationsartikel</button>
-            <button class="btn btn-success" onclick="saveInventory()">Änderungen speichern</button>
-
-            <div style="overflow-x: auto; max-height: 600px;">
-                <table id="consignmentTable">
-                    <thead>
-                        <tr>
-                            <th>Kategorie</th>
-                            <th>Artikelname</th>
-                            <th>Aktueller Bestand</th>
-                            <th>Mindestbestand</th>
-                            <th>Maximalbestand</th>
-                            <th>VK-Preis (€)</th>
-                            <th>Kommission (%)</th>
-                            <th>Ihre Einnahme (€)</th>
-                            <th>MwSt %</th>
-                            <th>Lieferant (Konsignant)</th>
-                            <th>Notizen</th>
-                            <th>Aktion</th>
-                        </tr>
-                    </thead>
-                    <tbody id="consignmentBody">
-                        </tbody>
-                </table>
+        <div class="panel panel-right">
+            <h2>📝 Aktuelle Einkaufsliste</h2>
+            <ul id="shopping-list-items"></ul>
+            <div class="list-actions">
+                <button class="btn btn-danger" id="clearListBtn">Liste leeren</button>
+                <button class="btn" id="exportBtn">Für Lagerverwaltung exportieren</button>
+                <button class="btn" id="printListBtn">Liste drucken</button>
             </div>
-        </div>
-
-        <div id="stock-update" class="tab-content">
-            <h2>Tägliches Bestandsupdate</h2>
-            <div class="stats">
-                <div class="stat-card">
-                    <h3 id="lowStockCount">0</h3>
-                    <p>Artikel unter Mindestbestand</p>
-                </div>
-                <div class="stat-card">
-                    <h3 id="outOfStockCount">0</h3>
-                    <p>Ausverkauft</p>
-                </div>
-                <div class="stat-card">
-                    <h3 id="totalValue">€0</h3>
-                    <p>Gesamtlagerwert</p>
-                </div>
-                <div class="stat-card">
-                    <h3 id="totalConsignmentValue">€0</h3>
-                    <p>Wert Konsignationsware (VK)</p>
-                </div>
-            </div>
-            
-            <h3>Schnelle Bestandsanpassungen</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Artikel</th>
-                        <th>Aktueller Bestand</th>
-                        <th>Anpassung</th>
-                        <th>Grund</th>
-                        <th>Aktualisieren</th>
-                    </tr>
-                </thead>
-                <tbody id="stockUpdateBody">
-                    </tbody>
-            </table>
-        </div>
-
-        <div id="shopping-list" class="tab-content">
-            <h2>Einkaufsliste Generator</h2>
-            <button class="btn" onclick="generateShoppingList()">Einkaufsliste erstellen</button>
-            <button class="btn" onclick="printShoppingList()">Liste drucken</button>
-            
-            <div id="shoppingListContent">
-                </div>
-        </div>
-
-        <div id="seasonal" class="tab-content">
-            <h2>Saisonware & Sonderartikel</h2>
-            <button class="btn" onclick="addSeasonalItem()">Saisonartikel hinzufügen</button>
-            
-            <table>
-                <thead>
-                    <tr>
-                        <th>Artikel</th>
-                        <th>Saison/Zeitraum</th>
-                        <th>Bestandslevel</th>
-                        <th>Status</th>
-                        <th>Notizen</th>
-                    </tr>
-                </thead>
-                <tbody id="seasonalBody">
-                    </tbody>
-            </table>
-        </div>
-
-        <div id="reports" class="tab-content">
-            <h2>Lagerberichte</h2>
-            <div class="stats">
-                <div class="stat-card">
-                    <h3 id="reportTotalItems">0</h3>
-                    <p>Gesamtartikel</p>
-                </div>
-                <div class="stat-card">
-                    <h3 id="reportCategories">0</h3>
-                    <p>Produktkategorien</p>
-                </div>
-                <div class="stat-card">
-                    <h3 id="reportConsignment">0</h3>
-                    <p>Konsignationsartikel</p>
-                </div>
-                <div class="stat-card">
-                    <h3 id="reportConsignmentValue">€0</h3>
-                    <p>Geschätzte Konsignationseinnahmen</p>
-                </div>
-            </div>
-            
-            <h3>Kategorien-Übersicht</h3>
-            <div id="categoryReport"></div>
         </div>
     </div>
+    
+    <div id="print-area" style="display: none;"></div>
 
     <script>
-        // Data is now stored in objects (hashmaps) for stability and efficiency.
-        let inventory = {};
-        let consignmentInventory = {}; 
+    document.addEventListener('DOMContentLoaded', () => {
+        const productCatalog = {
+            'Tabakwaren & Zubehör': [
+                { name: 'Marlboro Red Stange', supplier: 'Selgros' },
+                { name: 'Lucky Strike Stange', supplier: 'Selgros' },
+                { name: 'OCB Black Papers (Box)', supplier: 'Großmarkt' },
+                { name: 'Gizeh Filter (Beutel)', supplier: 'Großmarkt' }
+            ],
+            'Spirituosen': [
+                { name: 'Absolut Vodka 0,7l', supplier: 'Selgros' },
+                { name: 'Jägermeister 0,7l', supplier: 'Metro' },
+                { name: 'Tanqueray Gin 0,7l', supplier: 'Selgros' }
+            ],
+            'Bier, Wein & Sekt': [
+                { name: 'Kiste Becks 0,5l', supplier: 'Selgros' },
+                { name: 'Kiste Binding 0,5l', supplier: 'Selgros' },
+                { name: 'Rotkäppchen Sekt', supplier: 'Metro' },
+                { name: 'J.P. Chenet Wein', supplier: 'Metro' }
+            ],
+            'Alkoholfreie Getränke': [
+                { name: 'Kiste Coca Cola 0,33l', supplier: 'Metro' },
+                { name: 'Kiste Fanta 0,33l', supplier: 'Metro' },
+                { name: 'Red Bull 24er Tray', supplier: 'Metro' },
+                { name: 'Volvic Wasser 6x1,5l', supplier: 'Selgros' }
+            ],
+            'Süßwaren & Snacks': [
+                { name: 'Haribo Goldbären (Box)', supplier: 'Selgros' },
+                { name: 'Milka Schokolade (Display)', supplier: 'Selgros' },
+                { name: 'funny-frisch Chipsfrisch', supplier: 'Metro' },
+                { name: 'Ültje Erdnüsse', supplier: 'Metro' }
+            ],
+            'Kaffee & Tee': [
+                { name: 'Jacobs Krönung 500g', supplier: 'Selgros' },
+                { name: 'Teekanne Tee (Packung)', supplier: 'Metro' }
+            ],
+            'Lebensmittel': [
+                { name: 'Barilla Spaghetti 500g', supplier: 'Selgros' },
+                { name: 'H-Milch 1,5% Fett', supplier: 'Metro' },
+                { name: 'Nutella Glas', supplier: 'Selgros' }
+            ],
+            'Drogerieartikel': [
+                { name: 'Nivea Deo Spray', supplier: 'Metro' },
+                { name: 'Colgate Zahnpasta', supplier: 'Metro' },
+                { name: 'Tempo Taschentücher', supplier: 'Selgros' }
+            ],
+            'Büro- & Schreibwaren': [
+                { name: 'Kopierpapier A4 500 Blatt', supplier: 'Metro' },
+                { name: 'Umschläge DL (Box)', supplier: 'Selgros' }
+            ],
+            'Sonstiges': [
+                { name: 'Varta Batterien AA', supplier: 'Metro' },
+                { name: 'Feuerzeug', supplier: 'Großmarkt' }
+            ]
+        };
 
-        // --- CATEGORIES PARED DOWN ---
-        let categories = [
-            'Tabakwaren & Zubehör',
-            'Spirituosen',
-            'Bier, Wein & Sekt',
-            'Alkoholfreie Getränke',
-            'Süßwaren & Snacks',
-            'Kaffee & Tee',
-            'Lebensmittel',
-            'Drogerieartikel',
-            'Büro- & Schreibwaren',
-            'Sonstiges'
-        ];
+        const tabsContainer = document.getElementById('category-tabs');
+        const catalogContent = document.getElementById('catalog-content');
+        const shoppingList = document.getElementById('shopping-list-items');
+        const categorySelect = document.getElementById('newItemCategory');
+        const searchBox = document.getElementById('searchBox');
+        const currentListItems = new Map();
 
-        let suppliers = ['Selgros', 'Metro', 'Großmarkt Frankfurt', 'Sonstige'];
-
-        // With sample data initialize
-        function initializeInventory() {
-            // Helper to add item to a hashmap
-            const addItem = (item, isConsignment) => {
-                const id = crypto.randomUUID(); // Generate a unique ID
-                const targetMap = isConsignment ? consignmentInventory : inventory;
-                targetMap[id] = { ...item, id };
-            };
-
-            // Clear existing inventories before initializing
-            inventory = {};
-            consignmentInventory = {};
-
-            // --- SAMPLE DATA UPDATED WITH NEW CATEGORIES ---
-            addItem({
-                category: 'Tabakwaren & Zubehör',
-                name: 'Marlboro Red',
-                currentStock: 2,
-                minLevel: 5,
-                maxLevel: 20,
-                purchasePrice: 8.20,
-                sellingPrice: 10.00,
-                vat: 19,
-                supplier: 'Selgros',
-                notes: 'Standardware',
-                isConsignment: false
-            }, false);
-            
-            addItem({
-                category: 'Bier, Wein & Sekt',
-                name: 'Becks 0,5l',
-                currentStock: 24,
-                minLevel: 10,
-                maxLevel: 50,
-                purchasePrice: 0.65,
-                sellingPrice: 1.20,
-                vat: 19,
-                supplier: 'Selgros',
-                notes: 'Kiste à 24 Flaschen',
-                isConsignment: false
-            }, false);
-
-             addItem({
-                category: 'Alkoholfreie Getränke',
-                name: 'Coca Cola 0,33l',
-                currentStock: 18,
-                minLevel: 12,
-                maxLevel: 36,
-                purchasePrice: 0.55,
-                sellingPrice: 1.00,
-                vat: 19,
-                supplier: 'Metro',
-                notes: 'Glasflasche',
-                isConsignment: false
-            }, false);
-
-            addItem({
-                category: 'Lebensmittel',
-                name: 'Barilla Spaghetti 500g',
-                currentStock: 8,
-                minLevel: 5,
-                maxLevel: 20,
-                purchasePrice: 1.20,
-                sellingPrice: 2.10,
-                vat: 7,
-                supplier: 'Selgros',
-                notes: 'Standardformat',
-                isConsignment: false
-            }, false);
-
-            addItem({
-                category: 'Kaffee & Tee',
-                name: 'Premium Arabica Bohnen 1kg',
-                currentStock: 5,
-                minLevel: 3,
-                maxLevel: 15,
-                sellingPrice: 18.90,
-                commission: 20, // 20% commission
-                vat: 7,
-                supplier: 'Konsignation: Lokaler Röster',
-                notes: 'Aktuelle Konsignationsvereinbarung',
-                isConsignment: true
-            }, true);
-
-            addItem({
-                category: 'Spirituosen',
-                name: 'Handgemachter Gin 0,1l',
-                currentStock: 10,
-                minLevel: 5,
-                maxLevel: 25,
-                sellingPrice: 8.50,
-                commission: 30,
-                vat: 19,
-                supplier: 'Konsignation: Kleine Brennerei',
-                notes: 'Sonderposten',
-                isConsignment: true
-            }, true);
-            
-            renderInventoryTable();
-            renderConsignmentTable();
-            updateStats();
-        }
-
-        function showTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-            
-            document.getElementById(tabName).classList.add('active');
-            event.target.classList.add('active');
-            
-            if (tabName === 'reports') generateReports();
-            else if (tabName === 'stock-update') renderStockUpdateTable();
-        }
-
-        function renderInventoryTable() {
-            const tbody = document.getElementById('inventoryBody');
-            tbody.innerHTML = '';
-            
-            Object.values(inventory).forEach(item => {
-                const row = document.createElement('tr');
-                
-                if (item.currentStock === 0) row.classList.add('out-of-stock');
-                else if (item.currentStock <= item.minLevel) row.classList.add('low-stock');
-                
-                if (item.vat === 7) row.classList.add('vat-7');
-                else if (item.vat === 19) row.classList.add('vat-19');
-                
-                row.innerHTML = `
-                    <td>
-                        <select onchange="updateInventoryItem('${item.id}', 'category', this.value, false)">
-                            ${categories.map(cat => `<option value="${cat}" ${cat === item.category ? 'selected' : ''}>${cat}</option>`).join('')}
-                        </select>
-                    </td>
-                    <td><input type="text" value="${item.name}" onchange="updateInventoryItem('${item.id}', 'name', this.value, false)"></td>
-                    <td><input type="number" value="${item.currentStock}" onchange="updateInventoryItem('${item.id}', 'currentStock', this.value, false)"></td>
-                    <td><input type="number" value="${item.minLevel}" onchange="updateInventoryItem('${item.id}', 'minLevel', this.value, false)"></td>
-                    <td><input type="number" value="${item.maxLevel}" onchange="updateInventoryItem('${item.id}', 'maxLevel', this.value, false)"></td>
-                    <td><input type="number" step="0.01" value="${item.purchasePrice}" onchange="updateInventoryItem('${item.id}', 'purchasePrice', this.value, false)"></td>
-                    <td><input type="number" step="0.01" value="${item.sellingPrice}" onchange="updateInventoryItem('${item.id}', 'sellingPrice', this.value, false)"></td>
-                    <td>
-                        <select onchange="updateInventoryItem('${item.id}', 'vat', this.value, false)">
-                            <option value="7" ${item.vat === 7 ? 'selected' : ''}>7%</option>
-                            <option value="19" ${item.vat === 19 ? 'selected' : ''}>19%</option>
-                        </select>
-                    </td>
-                    <td>
-                        <select onchange="updateInventoryItem('${item.id}', 'supplier', this.value, false)">
-                            ${suppliers.map(sup => `<option value="${sup}" ${sup === item.supplier ? 'selected' : ''}>${sup}</option>`).join('')}
-                        </select>
-                    </td>
-                    <td><input type="text" value="${item.notes || ''}" onchange="updateInventoryItem('${item.id}', 'notes', this.value, false)"></td>
-                    <td><button class="btn" onclick="deleteInventoryItem('${item.id}', false)" style="background: #e74c3c;">Löschen</button></td>
-                `;
-                tbody.appendChild(row);
+        const renderTabs = () => {
+            tabsContainer.innerHTML = '';
+            Object.keys(productCatalog).forEach(category => {
+                const tab = document.createElement('button');
+                tab.className = 'category-tab';
+                tab.textContent = category;
+                tab.dataset.category = category;
+                tab.onclick = () => showCategory(category);
+                tabsContainer.appendChild(tab);
             });
-        }
+        };
 
-        function renderConsignmentTable() {
-            const tbody = document.getElementById('consignmentBody');
-            tbody.innerHTML = '';
-            
-            Object.values(consignmentInventory).forEach(item => {
-                const row = document.createElement('tr');
-                row.classList.add('consignment-item');
-                
-                if (item.currentStock === 0) row.classList.add('out-of-stock');
-                else if (item.currentStock <= item.minLevel) row.classList.add('low-stock');
-                if (item.vat === 7) row.classList.add('vat-7');
-                else if (item.vat === 19) row.classList.add('vat-19');
+        const showCategory = (categoryName) => {
+            document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
+            const activeTab = document.querySelector(`.category-tab[data-category="${categoryName}"]`);
+            if (activeTab) activeTab.classList.add('active');
 
-                const yourEarnings = ((item.sellingPrice * item.commission) / 100).toFixed(2);
+            catalogContent.innerHTML = '';
+            productCatalog[categoryName].forEach(item => {
+                const itemEl = document.createElement('div');
+                itemEl.className = 'item';
+                itemEl.innerHTML = `<span>${item.name}</span>`;
                 
-                row.innerHTML = `
-                    <td>
-                        <select onchange="updateInventoryItem('${item.id}', 'category', this.value, true)">
-                            ${categories.map(cat => `<option value="${cat}" ${cat === item.category ? 'selected' : ''}>${cat}</option>`).join('')}
-                        </select>
-                    </td>
-                    <td><input type="text" value="${item.name}" onchange="updateInventoryItem('${item.id}', 'name', this.value, true)"></td>
-                    <td><input type="number" value="${item.currentStock}" onchange="updateInventoryItem('${item.id}', 'currentStock', this.value, true)"></td>
-                    <td><input type="number" value="${item.minLevel}" onchange="updateInventoryItem('${item.id}', 'minLevel', this.value, true)"></td>
-                    <td><input type="number" value="${item.maxLevel}" onchange="updateInventoryItem('${item.id}', 'maxLevel', this.value, true)"></td>
-                    <td><input type="number" step="0.01" value="${item.sellingPrice}" onchange="updateInventoryItem('${item.id}', 'sellingPrice', this.value, true)"></td>
-                    <td><input type="number" step="1" min="5" max="30" value="${item.commission}" onchange="updateInventoryItem('${item.id}', 'commission', this.value, true)"></td>
-                    <td>€${yourEarnings}</td>
-                    <td>
-                        <select onchange="updateInventoryItem('${item.id}', 'vat', this.value, true)">
-                            <option value="7" ${item.vat === 7 ? 'selected' : ''}>7%</option>
-                            <option value="19" ${item.vat === 19 ? 'selected' : ''}>19%</option>
-                        </select>
-                    </td>
-                    <td><input type="text" value="${item.supplier || ''}" onchange="updateInventoryItem('${item.id}', 'supplier', this.value, true)"></td>
-                    <td><input type="text" value="${item.notes || ''}" onchange="updateInventoryItem('${item.id}', 'notes', this.value, true)"></td>
-                    <td><button class="btn" onclick="deleteInventoryItem('${item.id}', true)" style="background: #e74c3c;">Löschen</button></td>
-                `;
-                tbody.appendChild(row);
+                const addButton = document.createElement('button');
+                addButton.textContent = 'Add';
+                addButton.className = 'btn btn-add';
+                addButton.onclick = () => addItemToList(item.name, item.supplier);
+                
+                itemEl.appendChild(addButton);
+                catalogContent.appendChild(itemEl);
             });
-        }
+        };
 
-        function updateInventoryItem(id, field, value, isConsignment) {
-            let targetMap = isConsignment ? consignmentInventory : inventory;
+        const showSearchResults = (filter) => {
+            document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
+            catalogContent.innerHTML = '';
+            const lowerCaseFilter = filter.toLowerCase();
 
-            if (targetMap[id]) {
-                if (['currentStock', 'minLevel', 'maxLevel', 'commission', 'vat'].includes(field)) {
-                    targetMap[id][field] = parseInt(value) || 0;
-                } else if (['purchasePrice', 'sellingPrice'].includes(field)) {
-                    targetMap[id][field] = parseFloat(value) || 0;
-                } else {
-                    targetMap[id][field] = value;
+            for (const category in productCatalog) {
+                const matchingItems = productCatalog[category].filter(item => 
+                    item.name.toLowerCase().includes(lowerCaseFilter)
+                );
+                if (matchingItems.length > 0) {
+                    const categoryHeader = document.createElement('h3');
+                    categoryHeader.textContent = category;
+                    catalogContent.appendChild(categoryHeader);
+                    matchingItems.forEach(item => {
+                        const itemEl = document.createElement('div');
+                        itemEl.className = 'item';
+                        itemEl.innerHTML = `<span>${item.name}</span>`;
+                        const addButton = document.createElement('button');
+                        addButton.textContent = 'Add';
+                        addButton.className = 'btn btn-add';
+                        addButton.onclick = () => addItemToList(item.name, item.supplier);
+                        itemEl.appendChild(addButton);
+                        catalogContent.appendChild(itemEl);
+                    });
                 }
             }
-            
-            // Re-render only the affected table to update derived values like "Your Earnings"
-            if (isConsignment) {
-                renderConsignmentTable();
-            }
-            updateStats();
-        }
+        };
 
-        function deleteInventoryItem(id, isConsignment) {
-            if (confirm('Artikel wirklich löschen?')) {
-                if (isConsignment) {
-                    delete consignmentInventory[id];
-                    renderConsignmentTable();
-                } else {
-                    delete inventory[id];
-                    renderInventoryTable();
-                }
-                updateStats();
-            }
-        }
-
-        function addNewProduct(isConsignment = false) {
-            const id = crypto.randomUUID();
-            const newProduct = {
-                id: id,
-                category: categories[0],
-                name: isConsignment ? 'Neuer Konsignationsartikel' : 'Neuer Artikel',
-                currentStock: 0,
-                minLevel: 1,
-                maxLevel: 10,
-                sellingPrice: 0.00,
-                vat: 19,
-                notes: '',
-                isConsignment: isConsignment
-            };
-
-            if (isConsignment) {
-                newProduct.commission = 20;
-                newProduct.supplier = 'Konsignation: Neuer Lieferant';
-                consignmentInventory[id] = newProduct;
-                renderConsignmentTable();
-            } else {
-                newProduct.purchasePrice = 0.00;
-                newProduct.supplier = 'Selgros';
-                inventory[id] = newProduct;
-                renderInventoryTable();
-            }
-            updateStats();
-        }
-
-        function addNewConsignmentProduct() {
-            addNewProduct(true);
-        }
-
-        function updateStats() {
-            let lowStockCount = 0;
-            let outOfStockCount = 0;
-            let totalValue = 0;
-            let totalConsignmentValue = 0;
-
-            const allItems = [...Object.values(inventory), ...Object.values(consignmentInventory)];
-            
-            allItems.forEach(item => {
-                if (item.currentStock === 0) outOfStockCount++;
-                else if (item.currentStock <= item.minLevel) lowStockCount++;
-
-                if (item.isConsignment) {
-                    totalConsignmentValue += item.currentStock * item.sellingPrice;
-                } else {
-                    totalValue += item.currentStock * item.purchasePrice;
-                }
+        const populateCategoryDropdown = () => {
+            categorySelect.innerHTML = '';
+            Object.keys(productCatalog).forEach(category => {
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = category;
+                categorySelect.appendChild(option);
             });
-            
-            document.getElementById('lowStockCount').textContent = lowStockCount;
-            document.getElementById('outOfStockCount').textContent = outOfStockCount;
-            document.getElementById('totalValue').textContent = `€${totalValue.toFixed(2)}`;
-            document.getElementById('totalConsignmentValue').textContent = `€${totalConsignmentValue.toFixed(2)}`;
-        }
+        };
 
-        function renderStockUpdateTable() {
-            const tbody = document.getElementById('stockUpdateBody');
-            tbody.innerHTML = '';
-            
-            const criticalItems = [
-                ...Object.values(inventory), 
-                ...Object.values(consignmentInventory)
-            ].filter(item => item.currentStock <= item.minLevel);
-            
-            criticalItems.forEach((item) => {
-                const row = document.createElement('tr');
-                if (item.currentStock === 0) row.classList.add('out-of-stock');
-                else row.classList.add('low-stock');
-                
-                row.innerHTML = `
-                    <td>${item.name} ${item.isConsignment ? '(Konsignation)' : ''}</td>
-                    <td>${item.currentStock}</td>
-                    <td><input type="number" id="adjustment_${item.id}" placeholder="±Anzahl"></td>
-                    <td>
-                        <select id="reason_${item.id}">
-                            <option value="Verkauf">Verkauf</option>
-                            <option value="Einkauf">Einkauf</option>
-                            <option value="Verlust">Verlust/Beschädigung</option>
-                            <option value="Korrektur">Inventurkorrektur</option>
-                        </select>
-                    </td>
-                    <td><button class="btn" onclick="applyStockAdjustment('${item.id}', ${item.isConsignment})">Anwenden</button></td>
-                `;
-                tbody.appendChild(row);
-            });
-        }
-
-        function applyStockAdjustment(id, isConsignment) {
-            const adjustmentInput = document.getElementById(`adjustment_${id}`);
-            const adjustment = parseInt(adjustmentInput.value) || 0;
-            let targetMap = isConsignment ? consignmentInventory : inventory;
-
-            if (adjustment !== 0 && targetMap[id]) {
-                targetMap[id].currentStock += adjustment;
-                if (targetMap[id].currentStock < 0) targetMap[id].currentStock = 0;
-                
-                adjustmentInput.value = '';
-                renderStockUpdateTable();
-                updateStats();
-                
-                alert(`Bestand aktualisiert: ${targetMap[id].name}`);
-            }
-        }
-
-        function generateShoppingList() {
-            const shoppingList = Object.values(inventory).filter(item => item.currentStock <= item.minLevel);
-            const listBySupplier = {};
-            shoppingList.forEach(item => {
-                if (!listBySupplier[item.supplier]) listBySupplier[item.supplier] = [];
-                const neededQuantity = item.maxLevel - item.currentStock;
-                listBySupplier[item.supplier].push({ ...item, neededQuantity });
-            });
-            
-            const content = document.getElementById('shoppingListContent');
-            content.innerHTML = '';
-            
-            if (Object.keys(listBySupplier).length === 0) {
-                content.innerHTML = '<div class="shopping-list"><h3>Keine Artikel zu bestellen!</h3><p>Alle Artikel sind über dem Mindestbestand.</p></div>';
+        const addItemToList = (name, supplier = 'Sonstige') => {
+            if (currentListItems.has(name)) {
+                alert('Dieser Artikel ist bereits auf der Liste.');
                 return;
             }
-            
-            Object.entries(listBySupplier).forEach(([supplier, items]) => {
-                const supplierDiv = document.createElement('div');
-                supplierDiv.className = 'shopping-list';
-                
-                let totalCost = 0;
-                let itemList = '<ul>';
-                items.forEach(item => {
-                    const itemCost = item.neededQuantity * item.purchasePrice;
-                    totalCost += itemCost;
-                    itemList += `<li><strong>${item.name}</strong><br>Aktuell: ${item.currentStock} | Benötigt: ${item.neededQuantity} Stück<br>EK: €${item.purchasePrice.toFixed(2)} | Gesamt: €${itemCost.toFixed(2)}<br><em>${item.category}</em></li>`;
-                });
-                itemList += '</ul>';
-                
-                supplierDiv.innerHTML = `<h3>🏪 ${supplier}</h3>${itemList}<p><strong>Gesamtkosten ${supplier}: €${totalCost.toFixed(2)}</strong></p>`;
-                content.appendChild(supplierDiv);
-            });
-        }
+            const listItem = document.createElement('li');
+            listItem.dataset.supplier = supplier;
+            listItem.dataset.name = name;
+            listItem.innerHTML = `
+                <span>${name} <small>(${supplier})</small></span>
+                <input type="text" class="item-quantity" placeholder="z.B. 2 Kisten">
+                <input type="text" class="item-notes" placeholder="Notiz (optional)">
+                <button class="btn btn-danger list-item-remove-btn">X</button>
+            `;
+            shoppingList.appendChild(listItem);
+            currentListItems.set(name, true);
+            listItem.querySelector('.list-item-remove-btn').onclick = (e) => {
+                currentListItems.delete(e.target.closest('li').dataset.name);
+                e.target.closest('li').remove();
+            };
+        };
 
-        function printShoppingList() {
-            const content = document.getElementById('shoppingListContent');
-            if (content.innerHTML.trim() === '') generateShoppingList();
-            
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(`<html><head><title>Einkaufsliste - Sophien Post und Shop</title><style>body{font-family:Arial,sans-serif;margin:20px;}.header{text-align:center;margin-bottom:20px;}.shopping-list{margin:20px 0;padding:15px;border:1px solid #ccc;}ul{list-style-type:disc;margin-left:20px;}li{margin:10px 0;}</style></head><body><div class="header"><h1>Sophien Post und Shop</h1><h2>Einkaufsliste</h2><p>Datum: ${new Date().toLocaleDateString('de-DE')}</p></div>${content.innerHTML}</body></html>`);
-            printWindow.document.close();
-            printWindow.print();
-        }
-
-        function generateReports() {
-            const allItems = [...Object.values(inventory), ...Object.values(consignmentInventory)];
-            const allConsignmentItems = Object.values(consignmentInventory);
-
-            document.getElementById('reportTotalItems').textContent = allItems.length;
-            document.getElementById('reportCategories').textContent = new Set(allItems.map(item => item.category)).size;
-            document.getElementById('reportConsignment').textContent = allConsignmentItems.length;
-            
-            let totalConsignmentEarnings = allConsignmentItems.reduce((sum, item) => sum + item.currentStock * (item.sellingPrice * (item.commission / 100)), 0);
-            document.getElementById('reportConsignmentValue').textContent = `€${totalConsignmentEarnings.toFixed(2)}`;
-
-            const categoryStats = {};
-            allItems.forEach(item => {
-                if (!categoryStats[item.category]) {
-                    categoryStats[item.category] = { count: 0, value: 0, lowStock: 0, consignmentCount: 0, consignmentValue: 0, consignmentEarnings: 0 };
-                }
-                categoryStats[item.category].count++;
-                if (item.currentStock <= item.minLevel) categoryStats[item.category].lowStock++;
-
-                if(item.isConsignment){
-                    categoryStats[item.category].consignmentCount++;
-                    categoryStats[item.category].consignmentValue += item.currentStock * item.sellingPrice;
-                    categoryStats[item.category].consignmentEarnings += item.currentStock * (item.sellingPrice * (item.commission / 100));
-                } else {
-                    categoryStats[item.category].value += item.currentStock * item.purchasePrice;
-                }
-            });
-            
-            const categoryReport = document.getElementById('categoryReport');
-            categoryReport.innerHTML = '';
-            
-            Object.entries(categoryStats).forEach(([category, stats]) => {
-                const categoryDiv = document.createElement('div');
-                categoryDiv.className = 'stat-card';
-                categoryDiv.innerHTML = `<h4>${category}</h4><p>Artikel: ${stats.count}</p><p>Lagerwert (Ihre Kosten): €${stats.value.toFixed(2)}</p><p>Konsignationsware (VK Wert): €${stats.consignmentValue.toFixed(2)}</p><p>Konsignationseinnahmen: €${stats.consignmentEarnings.toFixed(2)}</p><p>Niedrige Bestände: ${stats.lowStock}</p>`;
-                categoryReport.appendChild(categoryDiv);
-            });
-        }
-
-        function filterTable() {
-            const searchTerm = document.getElementById('searchBox').value.toLowerCase().trim();
-            const rows = document.querySelectorAll('#inventoryBody tr');
-
-            rows.forEach(row => {
-                const nameInput = row.querySelector('td:nth-child(2) input');
-                const categorySelect = row.querySelector('td:nth-child(1) select');
-                if (nameInput && categorySelect) {
-                    const productName = nameInput.value.toLowerCase();
-                    const category = categorySelect.value.toLowerCase();
-                    row.style.display = (productName.includes(searchTerm) || category.includes(searchTerm)) ? '' : 'none';
-                }
-            });
-        }
-
-        function addSeasonalItem() {
-            const seasonalBody = document.getElementById('seasonalBody');
-            const row = document.createElement('tr');
-            row.className = 'seasonal-item';
-            row.innerHTML = `<td><input type="text" placeholder="Saisonartikel Name"></td><td><select><option>Weihnachten</option><option>Ostern</option><option>Sommer</option><option>Halloween</option><option>Silvester</option><option>Karneval</option><option>Muttertag</option><option>Oktoberfest</option></select></td><td><input type="number" placeholder="0"></td><td><select><option>Aktiv</option><option>Auslaufend</option><option>Beendet</option></select></td><td><input type="text" placeholder="Notizen..."></td>`;
-            seasonalBody.appendChild(row);
-        }
-
-        function saveInventory() {
-            try {
-                // Now also saves the hashmaps. Still needs a load function for true persistence.
-                const inventoryData = {
-                    inventory: inventory,
-                    consignmentInventory: consignmentInventory,
-                    timestamp: new Date().toISOString(),
-                    storeName: 'Sophien Post und Shop'
-                };
-                console.log('Inventar gespeichert:', inventoryData);
-                alert('Inventar erfolgreich gespeichert!\n\nZeitpunkt: ' + new Date().toLocaleString('de-DE'));
-            } catch (error) {
-                alert('Fehler beim Speichern: ' + error.message);
+        const addProductToCatalog = () => {
+            const name = document.getElementById('newItemName').value.trim();
+            const supplier = document.getElementById('newItemSupplier').value.trim() || 'Sonstige';
+            const category = categorySelect.value;
+            if (!name) {
+                alert('Bitte geben Sie einen Artikelnamen ein.');
+                return;
             }
-        }
-
-        function exportToCSV() {
-            const headers = ['Kategorie', 'Artikelname', 'Aktueller Bestand', 'Mindestbestand', 'Maximalbestand', 'EK-Preis', 'VK-Preis', 'MwSt %', 'Lieferant', 'Notizen', 'Typ'];
-            let csvContent = headers.join(';') + '\n';
+            productCatalog[category].push({ name, supplier });
+            alert(`'${name}' wurde zur Kategorie '${category}' hinzugefügt.`);
+            document.getElementById('newItemName').value = '';
+            document.getElementById('newItemSupplier').value = '';
             
-            Object.values(inventory).forEach(item => {
-                const row = [item.category, item.name, item.currentStock, item.minLevel, item.maxLevel, item.purchasePrice.toFixed(2), item.sellingPrice.toFixed(2), item.vat, item.supplier, item.notes || '', 'Hauptlager'];
-                csvContent += row.join(';') + '\n';
-            });
-
-            Object.values(consignmentInventory).forEach(item => {
-                const row = [item.category, item.name, item.currentStock, item.minLevel, item.maxLevel, 'N/A', item.sellingPrice.toFixed(2), item.vat, item.supplier, item.notes || '', `Konsignation (${item.commission}%)`];
-                csvContent += row.join(';') + '\n';
-            });
-            
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            link.setAttribute('href', url);
-            link.setAttribute('download', `Sophien_Post_Inventar_${new Date().toISOString().split('T')[0]}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
+            renderTabs();
+            showCategory(category);
+        };
         
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeInventory();
+        const generateAndPrintList = () => {
+            const items = Array.from(shoppingList.querySelectorAll('li'));
+            if (items.length === 0) {
+                alert('Die Einkaufsliste ist leer.');
+                return;
+            }
+            const listBySupplier = {};
+            items.forEach(item => {
+                const supplier = item.dataset.supplier;
+                if (!listBySupplier[supplier]) listBySupplier[supplier] = [];
+                listBySupplier[supplier].push({
+                    name: item.dataset.name,
+                    quantity: item.querySelector('.item-quantity').value || '...',
+                    notes: item.querySelector('.item-notes').value || '-'
+                });
+            });
+            const printArea = document.getElementById('print-area');
+            let printHTML = `<h1>Einkaufsliste - Sophien Post und Shop</h1><p><strong>Datum:</strong> ${new Date().toLocaleDateString('de-DE')}</p>`;
+            for (const supplier in listBySupplier) {
+                printHTML += `<h3>Lieferant: ${supplier}</h3><table border="1" cellpadding="5" cellspacing="0"><thead><tr><th>Artikel</th><th>Menge</th><th>Notizen</th></tr></thead><tbody>`;
+                listBySupplier[supplier].forEach(item => {
+                    printHTML += `<tr><td>${item.name}</td><td>${item.quantity}</td><td>${item.notes}</td></tr>`;
+                });
+                printHTML += `</tbody></table>`;
+            }
+            printArea.innerHTML = printHTML;
+            window.print();
+        };
+
+        const exportForInventoryApp = () => {
+            const inventory = {};
+            for (const category in productCatalog) {
+                productCatalog[category].forEach(item => {
+                    const id = crypto.randomUUID();
+                    inventory[id] = { id: id, category: category, name: item.name, currentStock: 0, minLevel: 1, maxLevel: 10, purchasePrice: 0.00, sellingPrice: 0.00, vat: 19, supplier: item.supplier, notes: '', isConsignment: false };
+                });
+            }
+            const exportData = { inventory: inventory, consignmentInventory: {}, timestamp: new Date().toISOString(), storeName: 'Sophien Post und Shop' };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", `catalog_export_${new Date().toISOString().split('T')[0]}.json`);
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+            alert('Der Produktkatalog wurde als JSON-Datei exportiert.');
+        };
+
+        searchBox.addEventListener('keyup', (e) => {
+            const filter = e.target.value.trim();
+            if (filter) {
+                tabsContainer.style.display = 'none';
+                showSearchResults(filter);
+            } else {
+                tabsContainer.style.display = 'flex';
+                const firstCategory = Object.keys(productCatalog)[0];
+                showCategory(firstCategory);
+            }
         });
+
+        document.getElementById('addItemToCatalogBtn').addEventListener('click', addProductToCatalog);
+        document.getElementById('clearListBtn').addEventListener('click', () => {
+            if (confirm('Möchten Sie die gesamte Liste wirklich leeren?')) {
+                shoppingList.innerHTML = '';
+                currentListItems.clear();
+            }
+        });
+        document.getElementById('printListBtn').addEventListener('click', generateAndPrintList);
+        document.getElementById('exportBtn').addEventListener('click', exportForInventoryApp);
+
+        renderTabs();
+        populateCategoryDropdown();
+        if (Object.keys(productCatalog).length > 0) {
+            showCategory(Object.keys(productCatalog)[0]);
+        }
+    });
     </script>
 </body>
 </html>
