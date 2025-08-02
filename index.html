@@ -308,31 +308,18 @@
         let inventory = {};
         let consignmentInventory = {}; 
 
+        // --- CATEGORIES PARED DOWN ---
         let categories = [
-            'Papierprodukte', 'Büroartikel', 'Bier', 'Alcopops', 'Cider',
-            'Spirituosen: große Flaschen', 'Spirituosen: mittlere Flaschen', 'Spirituosen: kleine Flaschen',
-            'Wein/Sekt', 'Erfrischungsgetränke: Dosen klein', 'Erfrischungsgetränke: Dosen groß',
-            'Erfrischungsgetränke: Flaschen klein', 'Erfrischungsgetränke: Flaschen mittel', 
-            'Erfrischungsgetränke: Flaschen groß', 'Erfrischungsgetränke: Tetrapack',
-            'Energy Drinks', 'Durstlöscher', 'Chips', 'Nüsse',
-            'Kaffee: Bohnen', 'Kaffee: Instant', 'Süßwaren fein', 'Kaugummi/Bonbons',
-            'Hustenbonbons/Harte Bonbons', 'Süßigkeiten', 'Mineralwasser: still groß',
-            'Mineralwasser: still mittel', 'Mineralwasser: still klein',
-            'Mineralwasser: gas groß', 'Mineralwasser: gas mittel', 'Mineralwasser: gas klein',
-            'Tabakwaren: Schnupftabak', 'Tabakwaren: Zigaretten 9€', 'Tabakwaren: Zigaretten 10€',
-            'Tabakwaren: Zigaretten 12€', 'Tabakwaren: Zigaretten 15€', 'Tabakwaren: Zigaretten 20€',
-            'Tabakwaren: Zigaretten 30€', 'Tabakwaren: Drehtabak', 'Tabakwaren: E-Zigaretten',
-            'Tabakwaren: Aktivkohlefilter', 'Tabakwaren: Filter', 'Tabakwaren: Longpapers',
-            'Tabakwaren: Papers kurz', 'Tabakwaren: Stopfhülsen', 'Tabakwaren: Stopfgerät',
-            'Eis', 'Kekse', 'Gummibärchen/Haribo', 'Säfte: Tetrapack', 'Säfte: Flaschen',
-            'Drogerie: Körperpflege', 'Drogerie: Damenhygiene', 'Drogerie: Kondome',
-            'Lebensmittel: Nudeln', 'Lebensmittel: Pesto', 'Lebensmittel: Konserven', 
-            'Lebensmittel: Nutella', 'Lebensmittel: Olivenöl', 'Lebensmittel: Speiseöl',
-            'Lebensmittel: Haferflocken', 'Lebensmittel: Mehl', 'Lebensmittel: Zucker',
-            'Lebensmittel: H-Milch', 'Lebensmittel: H-Sahne', 'Lebensmittel: Müsli',
-            'Lebensmittel: Alufolie', 'Lebensmittel: Fertiggerichte', 'Lebensmittel: Essiggurken',
-            'Lebensmittel: Brot abgepackt', 'Lebensmittel: Babynahrung', 'Lebensmittel: Salz',
-            'Lebensmittel: Pfeffer', 'Lebensmittel: Würzmittel', 'Lebensmittel: Bockwurst'
+            'Tabakwaren & Zubehör',
+            'Spirituosen',
+            'Bier, Wein & Sekt',
+            'Alkoholfreie Getränke',
+            'Süßwaren & Snacks',
+            'Kaffee & Tee',
+            'Lebensmittel',
+            'Drogerieartikel',
+            'Büro- & Schreibwaren',
+            'Sonstiges'
         ];
 
         let suppliers = ['Selgros', 'Metro', 'Großmarkt Frankfurt', 'Sonstige'];
@@ -350,8 +337,9 @@
             inventory = {};
             consignmentInventory = {};
 
+            // --- SAMPLE DATA UPDATED WITH NEW CATEGORIES ---
             addItem({
-                category: 'Tabakwaren: Zigaretten 10€',
+                category: 'Tabakwaren & Zubehör',
                 name: 'Marlboro Red',
                 currentStock: 2,
                 minLevel: 5,
@@ -365,7 +353,7 @@
             }, false);
             
             addItem({
-                category: 'Bier',
+                category: 'Bier, Wein & Sekt',
                 name: 'Becks 0,5l',
                 currentStock: 24,
                 minLevel: 10,
@@ -379,7 +367,7 @@
             }, false);
 
              addItem({
-                category: 'Erfrischungsgetränke: Flaschen klein',
+                category: 'Alkoholfreie Getränke',
                 name: 'Coca Cola 0,33l',
                 currentStock: 18,
                 minLevel: 12,
@@ -393,7 +381,7 @@
             }, false);
 
             addItem({
-                category: 'Lebensmittel: Nudeln',
+                category: 'Lebensmittel',
                 name: 'Barilla Spaghetti 500g',
                 currentStock: 8,
                 minLevel: 5,
@@ -407,7 +395,7 @@
             }, false);
 
             addItem({
-                category: 'Kaffee: Bohnen',
+                category: 'Kaffee & Tee',
                 name: 'Premium Arabica Bohnen 1kg',
                 currentStock: 5,
                 minLevel: 3,
@@ -421,7 +409,7 @@
             }, true);
 
             addItem({
-                category: 'Spirituosen: kleine Flaschen',
+                category: 'Spirituosen',
                 name: 'Handgemachter Gin 0,1l',
                 currentStock: 10,
                 minLevel: 5,
