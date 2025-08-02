@@ -12,7 +12,27 @@
         .panel-left { width: 45%; border-right: 1px solid #e0e0e0; }
         .panel-right { width: 55%; }
         h1, h2, h3 { color: #2c3e50; }
-        .search-box, .form-input { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        
+        /* --- NEW: Search Container Styles --- */
+        .search-container { position: relative; }
+        .clear-search-btn {
+            position: absolute;
+            top: 50%;
+            right: 1px;
+            transform: translateY(-50%);
+            border: none;
+            background: none;
+            font-size: 1.5rem;
+            line-height: 1;
+            padding: 0 15px;
+            color: #999;
+            cursor: pointer;
+            display: none; /* Hidden by default */
+        }
+        .clear-search-btn:hover { color: #333; }
+        
+        #searchBox { width: 100%; padding: 10px; padding-right: 40px; /* Make space for X button */ margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        .form-input { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
         
         #category-tabs { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #3498db; }
         .category-tab { background: #ecf0f1; border: 1px solid #ccc; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 14px; transition: all 0.2s; }
@@ -36,7 +56,6 @@
         .add-to-catalog-form { display: grid; gap: 10px; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ccc; }
         
         .mobile-nav { display: none; }
-
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; }
         .modal-content { background: white; padding: 30px; border-radius: 8px; text-align: center; max-width: 400px; }
         #qrcode { margin: 20px auto; width: 256px; height: 256px; }
@@ -70,9 +89,14 @@
     <div class="container">
         <div class="panel panel-left">
             <h2>🛒 Artikelkatalog</h2>
-            <input type="text" id="searchBox" class="search-box" placeholder="Alle Kategorien durchsuchen...">
+            <div class="search-container">
+                <input type="text" id="searchBox" placeholder="Alle Kategorien durchsuchen...">
+                <button id="clearSearchBtn" class="clear-search-btn">&times;</button>
+            </div>
+            
             <div id="category-tabs"></div>
             <div id="catalog-content"></div>
+
             <div class="add-to-catalog-form">
                 <h3>Neuen Artikel zum Katalog hinzufügen</h3>
                 <input type="text" id="newItemName" class="form-input" placeholder="Artikelname">
@@ -131,9 +155,32 @@
         const shoppingList = document.getElementById('shopping-list-items');
         const categorySelect = document.getElementById('newItemCategory');
         const searchBox = document.getElementById('searchBox');
+        const clearSearchBtn = document.getElementById('clearSearchBtn'); // NEW
         const currentListItems = new Map();
         
-        const getListGroupedBySupplier = () => {
+        const getListGroupedBySupplier = () => { /* ... unchanged ... */ };
+        const copyListAsText = () => { /* ... unchanged ... */ };
+        const shareViaQRCode = () => { /* ... unchanged ... */ };
+        const renderTabs = () => { /* ... unchanged ... */ };
+        const showCategory = () => { /* ... unchanged ... */ };
+        const showSearchResults = () => { /* ... unchanged ... */ };
+        const populateCategoryDropdown = () => { /* ... unchanged ... */ };
+        const addItemToList = () => { /* ... unchanged ... */ };
+        const addProductToCatalog = () => { /* ... unchanged ... */ };
+        const generateAndPrintList = () => { /* ... unchanged ... */ };
+        const exportForInventoryApp = () => { /* ... unchanged ... */ };
+
+        // --- NEW: Reusable function to reset the view ---
+        const resetToDefaultView = () => {
+            searchBox.value = '';
+            clearSearchBtn.style.display = 'none';
+            tabsContainer.style.display = 'flex';
+            showCategory(Object.keys(productCatalog)[0]);
+        };
+
+        // --- All functions defined in full below ---
+
+        getListGroupedBySupplier = () => {
             const items = Array.from(shoppingList.querySelectorAll('li'));
             if (items.length === 0) {
                 alert('Die Einkaufsliste ist leer.');
@@ -152,7 +199,7 @@
             return listBySupplier;
         };
 
-        const copyListAsText = () => {
+        copyListAsText = () => {
             const listBySupplier = getListGroupedBySupplier();
             if (!listBySupplier) return;
             let text = `EINKAUFSLISTE - Sophien Post und Shop\nDatum: ${new Date().toLocaleDateString('de-DE')}\n\n`;
@@ -168,7 +215,7 @@
             navigator.clipboard.writeText(text).then(() => alert('Liste in die Zwischenablage kopiert!'), () => alert('Fehler beim Kopieren.'));
         };
 
-        const shareViaQRCode = () => {
+        shareViaQRCode = () => {
             const listBySupplier = getListGroupedBySupplier();
             if (!listBySupplier) return;
             let shopperHTML = `<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Einkaufsliste</title><style>body{font-family:-apple-system,sans-serif;margin:0;padding:10px;background:#f8f9fa;}h1,h3{color:#333}div{margin-bottom:15px;background:white;padding:15px;border-radius:8px;}label{display:flex;align-items:center;font-size:1.1rem;padding:12px 5px;border-bottom:1px solid #eee;}label:last-child{border-bottom:none;}input{width:1.5rem;height:1.5rem;margin-right:15px;}label:has(input:checked){text-decoration:line-through;color:#888;}</style></head><body><h1>✅ Einkaufsliste</h1>`;
@@ -183,16 +230,12 @@
             }
             shopperHTML += `</body></html>`;
             const dataUri = 'data:text/html;charset=utf-8,' + encodeURIComponent(shopperHTML);
-
-            // --- NEW: QR Code Robustness Check ---
             if (dataUri.length > 4000) {
                 alert('Warnung: Die Einkaufsliste ist sehr lang. Der QR-Code könnte schwer zu scannen sein.');
             }
-
             const qrModal = document.getElementById('qrModal');
             const qrcodeContainer = document.getElementById('qrcode');
             qrcodeContainer.innerHTML = '';
-
             try {
                 new QRCode(qrcodeContainer, { text: dataUri, width: 256, height: 256 });
                 qrModal.style.display = 'flex';
@@ -202,7 +245,7 @@
             }
         };
         
-        const renderTabs = () => {
+        renderTabs = () => {
             tabsContainer.innerHTML = '';
             Object.keys(productCatalog).forEach(category => {
                 const tab = document.createElement('button');
@@ -214,26 +257,28 @@
             });
         };
 
-        const showCategory = (categoryName) => {
+        showCategory = (categoryName) => {
             document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
             const activeTab = document.querySelector(`.category-tab[data-category="${categoryName}"]`);
             if (activeTab) activeTab.classList.add('active');
             catalogContent.innerHTML = '';
-            productCatalog[categoryName].forEach(item => {
-                const itemEl = document.createElement('div');
-                itemEl.className = 'item';
-                itemEl.innerHTML = `<span>${item.name}</span>`;
-                const addButton = document.createElement('button');
-                addButton.textContent = 'Add';
-                addButton.className = 'btn btn-add';
-                addButton.onclick = () => addItemToList(item.name, item.supplier);
-                itemEl.appendChild(addButton);
-                catalogContent.appendChild(itemEl);
-            });
+            if (productCatalog[categoryName]) {
+                productCatalog[categoryName].forEach(item => {
+                    const itemEl = document.createElement('div');
+                    itemEl.className = 'item';
+                    itemEl.innerHTML = `<span>${item.name}</span>`;
+                    const addButton = document.createElement('button');
+                    addButton.textContent = 'Add';
+                    addButton.className = 'btn btn-add';
+                    addButton.onclick = () => addItemToList(item.name, item.supplier);
+                    itemEl.appendChild(addButton);
+                    catalogContent.appendChild(itemEl);
+                });
+            }
         };
 
-        const showSearchResults = (filter) => {
-            document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
+        showSearchResults = (filter) => {
+            tabsContainer.style.display = 'none';
             catalogContent.innerHTML = '';
             const lowerCaseFilter = filter.toLowerCase();
             for (const category in productCatalog) {
@@ -255,13 +300,12 @@
                     });
                 }
             }
-            // --- NEW: Empty Search Results Message ---
             if (catalogContent.innerHTML === '') {
                 catalogContent.innerHTML = `<p style="padding: 20px; text-align: center;">Keine Ergebnisse für "${filter}" gefunden.</p>`;
             }
         };
         
-        const populateCategoryDropdown = () => {
+        populateCategoryDropdown = () => {
             categorySelect.innerHTML = '';
             Object.keys(productCatalog).forEach(category => {
                 const option = document.createElement('option');
@@ -271,11 +315,10 @@
             });
         };
 
-        const addItemToList = (name, supplier = 'Sonstige') => {
+        addItemToList = (name, supplier = 'Sonstige') => {
             if (currentListItems.has(name)) { alert('Dieser Artikel ist bereits auf der Liste.'); return; }
             const listItem = document.createElement('li');
-            listItem.dataset.supplier = supplier;
-            listItem.dataset.name = name;
+            listItem.dataset.supplier = supplier; listItem.dataset.name = name;
             listItem.innerHTML = `<span>${name} <small>(${supplier})</small></span><input type="text" class="item-quantity" placeholder="z.B. 2 Kisten"><input type="text" class="item-notes" placeholder="Notiz (optional)"><button class="btn btn-danger list-item-remove-btn">X</button>`;
             shoppingList.appendChild(listItem);
             currentListItems.set(name, true);
@@ -287,19 +330,16 @@
             };
         };
 
-        const addProductToCatalog = () => {
+        addProductToCatalog = () => {
             const name = document.getElementById('newItemName').value.trim();
             const supplier = document.getElementById('newItemSupplier').value.trim() || 'Sonstige';
             const category = categorySelect.value;
             if (!name) { alert('Bitte geben Sie einen Artikelnamen ein.'); return; }
-
-            // --- NEW: Duplicate Item Check ---
             const itemExists = Object.values(productCatalog).flat().some(item => item.name.toLowerCase() === name.toLowerCase());
             if (itemExists) {
                 alert(`Ein Artikel mit dem Namen "${name}" existiert bereits.`);
                 return;
             }
-
             productCatalog[category].push({ name, supplier });
             alert(`'${name}' wurde zur Kategorie '${category}' hinzugefügt.`);
             document.getElementById('newItemName').value = '';
@@ -309,7 +349,7 @@
             showCategory(category);
         };
 
-        const generateAndPrintList = () => {
+        generateAndPrintList = () => {
             const listBySupplier = getListGroupedBySupplier();
             if (!listBySupplier) return;
             const printArea = document.getElementById('print-area');
@@ -319,11 +359,10 @@
                 listBySupplier[supplier].forEach(item => { printHTML += `<tr><td>${item.name}</td><td>${item.quantity}</td><td>${item.notes}</td></tr>`; });
                 printHTML += `</tbody></table>`;
             }
-            printArea.innerHTML = printHTML;
-            window.print();
+            printArea.innerHTML = printHTML; window.print();
         };
 
-        const exportForInventoryApp = () => {
+        exportForInventoryApp = () => {
             const inventory = {};
             for (const category in productCatalog) {
                 productCatalog[category].forEach(item => {
@@ -345,20 +384,20 @@
         // --- Event Listener setup ---
         searchBox.addEventListener('keyup', (e) => {
             const filter = e.target.value.trim();
+            clearSearchBtn.style.display = filter ? 'block' : 'none'; // NEW
             if (filter) {
-                tabsContainer.style.display = 'none';
                 showSearchResults(filter);
             } else {
-                tabsContainer.style.display = 'flex';
-                showCategory(Object.keys(productCatalog)[0]);
+                resetToDefaultView();
             }
         });
+
+        clearSearchBtn.addEventListener('click', resetToDefaultView); // NEW
+        
         document.getElementById('addItemToCatalogBtn').addEventListener('click', addProductToCatalog);
         document.getElementById('clearListBtn').addEventListener('click', () => {
             if (confirm('Möchten Sie die gesamte Liste wirklich leeren?')) {
-                shoppingList.innerHTML = '';
-                currentListItems.clear();
-                document.getElementById('list-item-count').textContent = `(0)`;
+                shoppingList.innerHTML = ''; currentListItems.clear(); document.getElementById('list-item-count').textContent = `(0)`;
             }
         });
         document.getElementById('printListBtn').addEventListener('click', generateAndPrintList);
