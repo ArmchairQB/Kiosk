@@ -36,20 +36,55 @@
         .list-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; border-top: 1px solid #e0e0e0; padding-top: 20px; }
         .add-to-catalog-form { display: grid; gap: 10px; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ccc; }
         
+        .mobile-nav { display: none; } /* Hidden on desktop */
+
+        /* --- MOBILE OPTIMIZATIONS --- */
         @media (max-width: 768px) {
-            body { -webkit-text-size-adjust: 100%; }
-            .container { flex-direction: column; height: auto; margin: 0; border-radius: 0; }
-            .panel-left, .panel-right { width: 100%; box-sizing: border-box; border-right: none; border-bottom: 1px solid #e0e0e0; max-height: 60vh; }
+            body { padding-bottom: 60px; /* Prevent content from being hidden behind fixed nav */ }
+            .container { flex-direction: row; height: 100vh; margin: 0; border-radius: 0; }
+            
+            .panel { width: 100%; border: none; padding: 15px; }
+            .panel-right { display: none; } /* Hide shopping list by default */
+
+            /* View switching logic */
+            body.view-list .panel-left { display: none; }
+            body.view-list .panel-right { display: flex; }
+
             .list-actions { flex-direction: column; align-items: stretch; }
             #shopping-list-items li { grid-template-columns: 1fr; gap: 8px; padding: 15px 0; border-bottom: 1px solid #eee; }
             h2 { font-size: 1.2rem; }
             h3 { font-size: 1.1rem; }
             #category-tabs { flex-wrap: nowrap; overflow-x: auto; }
+
+            /* Mobile Navigation Bar */
+            .mobile-nav {
+                display: flex;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background-color: #34495e;
+                box-shadow: 0 -2px 5px rgba(0,0,0,0.2);
+                z-index: 1000;
+            }
+            .mobile-nav-btn {
+                flex-grow: 1;
+                background: none;
+                border: none;
+                color: white;
+                padding: 15px 10px;
+                font-size: 1rem;
+                border-top: 3px solid transparent;
+            }
+            .mobile-nav-btn.active {
+                background-color: #2c3e50;
+                border-top-color: #3498db;
+            }
         }
 
         @media print {
-            body { background-color: white; }
-            .container, .panel-left, .list-actions, .list-item-remove-btn { display: none; }
+            body { background-color: white; padding-bottom: 0; }
+            .container, .panel-left, .list-actions, .list-item-remove-btn, .mobile-nav { display: none; }
             #print-area { display: block !important; }
             h2, h3 { margin: 20px 0 10px 0; }
             table { width: 100%; border-collapse: collapse; }
@@ -58,7 +93,7 @@
         }
     </style>
 </head>
-<body>
+<body class="">
 
     <div class="container">
         <div class="panel panel-left">
@@ -88,62 +123,26 @@
         </div>
     </div>
     
+    <div class="mobile-nav">
+        <button id="viewCatalogBtn" class="mobile-nav-btn active">Katalog</button>
+        <button id="viewListBtn" class="mobile-nav-btn">Einkaufsliste <span id="list-item-count">(0)</span></button>
+    </div>
+
     <div id="print-area" style="display: none;"></div>
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         const productCatalog = {
-            'Tabakwaren & Zubehör': [
-                { name: 'Marlboro Red Stange', supplier: 'Selgros' },
-                { name: 'Lucky Strike Stange', supplier: 'Selgros' },
-                { name: 'OCB Black Papers (Box)', supplier: 'Großmarkt' },
-                { name: 'Gizeh Filter (Beutel)', supplier: 'Großmarkt' }
-            ],
-            'Spirituosen': [
-                { name: 'Absolut Vodka 0,7l', supplier: 'Selgros' },
-                { name: 'Jägermeister 0,7l', supplier: 'Metro' },
-                { name: 'Tanqueray Gin 0,7l', supplier: 'Selgros' }
-            ],
-            'Bier, Wein & Sekt': [
-                { name: 'Kiste Becks 0,5l', supplier: 'Selgros' },
-                { name: 'Kiste Binding 0,5l', supplier: 'Selgros' },
-                { name: 'Rotkäppchen Sekt', supplier: 'Metro' },
-                { name: 'J.P. Chenet Wein', supplier: 'Metro' }
-            ],
-            'Alkoholfreie Getränke': [
-                { name: 'Kiste Coca Cola 0,33l', supplier: 'Metro' },
-                { name: 'Kiste Fanta 0,33l', supplier: 'Metro' },
-                { name: 'Red Bull 24er Tray', supplier: 'Metro' },
-                { name: 'Volvic Wasser 6x1,5l', supplier: 'Selgros' }
-            ],
-            'Süßwaren & Snacks': [
-                { name: 'Haribo Goldbären (Box)', supplier: 'Selgros' },
-                { name: 'Milka Schokolade (Display)', supplier: 'Selgros' },
-                { name: 'funny-frisch Chipsfrisch', supplier: 'Metro' },
-                { name: 'Ültje Erdnüsse', supplier: 'Metro' }
-            ],
-            'Kaffee & Tee': [
-                { name: 'Jacobs Krönung 500g', supplier: 'Selgros' },
-                { name: 'Teekanne Tee (Packung)', supplier: 'Metro' }
-            ],
-            'Lebensmittel': [
-                { name: 'Barilla Spaghetti 500g', supplier: 'Selgros' },
-                { name: 'H-Milch 1,5% Fett', supplier: 'Metro' },
-                { name: 'Nutella Glas', supplier: 'Selgros' }
-            ],
-            'Drogerieartikel': [
-                { name: 'Nivea Deo Spray', supplier: 'Metro' },
-                { name: 'Colgate Zahnpasta', supplier: 'Metro' },
-                { name: 'Tempo Taschentücher', supplier: 'Selgros' }
-            ],
-            'Büro- & Schreibwaren': [
-                { name: 'Kopierpapier A4 500 Blatt', supplier: 'Metro' },
-                { name: 'Umschläge DL (Box)', supplier: 'Selgros' }
-            ],
-            'Sonstiges': [
-                { name: 'Varta Batterien AA', supplier: 'Metro' },
-                { name: 'Feuerzeug', supplier: 'Großmarkt' }
-            ]
+            'Tabakwaren & Zubehör': [{ name: 'Marlboro Red Stange', supplier: 'Selgros' }, { name: 'Lucky Strike Stange', supplier: 'Selgros' }, { name: 'OCB Black Papers (Box)', supplier: 'Großmarkt' }, { name: 'Gizeh Filter (Beutel)', supplier: 'Großmarkt' }],
+            'Spirituosen': [{ name: 'Absolut Vodka 0,7l', supplier: 'Selgros' }, { name: 'Jägermeister 0,7l', supplier: 'Metro' }, { name: 'Tanqueray Gin 0,7l', supplier: 'Selgros' }],
+            'Bier, Wein & Sekt': [{ name: 'Kiste Becks 0,5l', supplier: 'Selgros' }, { name: 'Kiste Binding 0,5l', supplier: 'Selgros' }, { name: 'Rotkäppchen Sekt', supplier: 'Metro' }, { name: 'J.P. Chenet Wein', supplier: 'Metro' }],
+            'Alkoholfreie Getränke': [{ name: 'Kiste Coca Cola 0,33l', supplier: 'Metro' }, { name: 'Kiste Fanta 0,33l', supplier: 'Metro' }, { name: 'Red Bull 24er Tray', supplier: 'Metro' }, { name: 'Volvic Wasser 6x1,5l', supplier: 'Selgros' }],
+            'Süßwaren & Snacks': [{ name: 'Haribo Goldbären (Box)', supplier: 'Selgros' }, { name: 'Milka Schokolade (Display)', supplier: 'Selgros' }, { name: 'funny-frisch Chipsfrisch', supplier: 'Metro' }, { name: 'Ültje Erdnüsse', supplier: 'Metro' }],
+            'Kaffee & Tee': [{ name: 'Jacobs Krönung 500g', supplier: 'Selgros' }, { name: 'Teekanne Tee (Packung)', supplier: 'Metro' }],
+            'Lebensmittel': [{ name: 'Barilla Spaghetti 500g', supplier: 'Selgros' }, { name: 'H-Milch 1,5% Fett', supplier: 'Metro' }, { name: 'Nutella Glas', supplier: 'Selgros' }],
+            'Drogerieartikel': [{ name: 'Nivea Deo Spray', supplier: 'Metro' }, { name: 'Colgate Zahnpasta', supplier: 'Metro' }, { name: 'Tempo Taschentücher', supplier: 'Selgros' }],
+            'Büro- & Schreibwaren': [{ name: 'Kopierpapier A4 500 Blatt', supplier: 'Metro' }, { name: 'Umschläge DL (Box)', supplier: 'Selgros' }],
+            'Sonstiges': [{ name: 'Varta Batterien AA', supplier: 'Metro' }, { name: 'Feuerzeug', supplier: 'Großmarkt' }]
         };
 
         const tabsContainer = document.getElementById('category-tabs');
@@ -152,6 +151,14 @@
         const categorySelect = document.getElementById('newItemCategory');
         const searchBox = document.getElementById('searchBox');
         const currentListItems = new Map();
+        
+        const viewCatalogBtn = document.getElementById('viewCatalogBtn');
+        const viewListBtn = document.getElementById('viewListBtn');
+        const listItemCountSpan = document.getElementById('list-item-count');
+
+        const updateListItemCount = () => {
+            listItemCountSpan.textContent = `(${currentListItems.size})`;
+        };
 
         const renderTabs = () => {
             tabsContainer.innerHTML = '';
@@ -175,12 +182,10 @@
                 const itemEl = document.createElement('div');
                 itemEl.className = 'item';
                 itemEl.innerHTML = `<span>${item.name}</span>`;
-                
                 const addButton = document.createElement('button');
                 addButton.textContent = 'Add';
                 addButton.className = 'btn btn-add';
                 addButton.onclick = () => addItemToList(item.name, item.supplier);
-                
                 itemEl.appendChild(addButton);
                 catalogContent.appendChild(itemEl);
             });
@@ -190,11 +195,8 @@
             document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
             catalogContent.innerHTML = '';
             const lowerCaseFilter = filter.toLowerCase();
-
             for (const category in productCatalog) {
-                const matchingItems = productCatalog[category].filter(item => 
-                    item.name.toLowerCase().includes(lowerCaseFilter)
-                );
+                const matchingItems = productCatalog[category].filter(item => item.name.toLowerCase().includes(lowerCaseFilter));
                 if (matchingItems.length > 0) {
                     const categoryHeader = document.createElement('h3');
                     categoryHeader.textContent = category;
@@ -213,7 +215,7 @@
                 }
             }
         };
-
+        
         const populateCategoryDropdown = () => {
             categorySelect.innerHTML = '';
             Object.keys(productCatalog).forEach(category => {
@@ -240,9 +242,11 @@
             `;
             shoppingList.appendChild(listItem);
             currentListItems.set(name, true);
+            updateListItemCount();
             listItem.querySelector('.list-item-remove-btn').onclick = (e) => {
                 currentListItems.delete(e.target.closest('li').dataset.name);
                 e.target.closest('li').remove();
+                updateListItemCount();
             };
         };
 
@@ -258,34 +262,25 @@
             alert(`'${name}' wurde zur Kategorie '${category}' hinzugefügt.`);
             document.getElementById('newItemName').value = '';
             document.getElementById('newItemSupplier').value = '';
-            
             renderTabs();
+            populateCategoryDropdown();
             showCategory(category);
         };
-        
+
         const generateAndPrintList = () => {
             const items = Array.from(shoppingList.querySelectorAll('li'));
-            if (items.length === 0) {
-                alert('Die Einkaufsliste ist leer.');
-                return;
-            }
+            if (items.length === 0) { alert('Die Einkaufsliste ist leer.'); return; }
             const listBySupplier = {};
             items.forEach(item => {
                 const supplier = item.dataset.supplier;
                 if (!listBySupplier[supplier]) listBySupplier[supplier] = [];
-                listBySupplier[supplier].push({
-                    name: item.dataset.name,
-                    quantity: item.querySelector('.item-quantity').value || '...',
-                    notes: item.querySelector('.item-notes').value || '-'
-                });
+                listBySupplier[supplier].push({ name: item.dataset.name, quantity: item.querySelector('.item-quantity').value || '...', notes: item.querySelector('.item-notes').value || '-' });
             });
             const printArea = document.getElementById('print-area');
             let printHTML = `<h1>Einkaufsliste - Sophien Post und Shop</h1><p><strong>Datum:</strong> ${new Date().toLocaleDateString('de-DE')}</p>`;
             for (const supplier in listBySupplier) {
                 printHTML += `<h3>Lieferant: ${supplier}</h3><table border="1" cellpadding="5" cellspacing="0"><thead><tr><th>Artikel</th><th>Menge</th><th>Notizen</th></tr></thead><tbody>`;
-                listBySupplier[supplier].forEach(item => {
-                    printHTML += `<tr><td>${item.name}</td><td>${item.quantity}</td><td>${item.notes}</td></tr>`;
-                });
+                listBySupplier[supplier].forEach(item => { printHTML += `<tr><td>${item.name}</td><td>${item.quantity}</td><td>${item.notes}</td></tr>`; });
                 printHTML += `</tbody></table>`;
             }
             printArea.innerHTML = printHTML;
@@ -311,6 +306,7 @@
             alert('Der Produktkatalog wurde als JSON-Datei exportiert.');
         };
 
+        // --- Event Listeners ---
         searchBox.addEventListener('keyup', (e) => {
             const filter = e.target.value.trim();
             if (filter) {
@@ -322,17 +318,29 @@
                 showCategory(firstCategory);
             }
         });
-
         document.getElementById('addItemToCatalogBtn').addEventListener('click', addProductToCatalog);
         document.getElementById('clearListBtn').addEventListener('click', () => {
             if (confirm('Möchten Sie die gesamte Liste wirklich leeren?')) {
                 shoppingList.innerHTML = '';
                 currentListItems.clear();
+                updateListItemCount();
             }
         });
         document.getElementById('printListBtn').addEventListener('click', generateAndPrintList);
         document.getElementById('exportBtn').addEventListener('click', exportForInventoryApp);
 
+        viewCatalogBtn.addEventListener('click', () => {
+            document.body.classList.remove('view-list');
+            viewListBtn.classList.remove('active');
+            viewCatalogBtn.classList.add('active');
+        });
+        viewListBtn.addEventListener('click', () => {
+            document.body.classList.add('view-list');
+            viewCatalogBtn.classList.remove('active');
+            viewListBtn.classList.add('active');
+        });
+
+        // --- Initial Load ---
         renderTabs();
         populateCategoryDropdown();
         if (Object.keys(productCatalog).length > 0) {
