@@ -126,19 +126,13 @@
             'Sonstiges': [{ name: 'Varta Batterien AA', supplier: 'Metro' }, { name: 'Feuerzeug', supplier: 'Großmarkt' }]
         };
 
-        // --- Element references ---
         const tabsContainer = document.getElementById('category-tabs');
         const catalogContent = document.getElementById('catalog-content');
         const shoppingList = document.getElementById('shopping-list-items');
         const categorySelect = document.getElementById('newItemCategory');
         const searchBox = document.getElementById('searchBox');
-        const viewCatalogBtn = document.getElementById('viewCatalogBtn');
-        const viewListBtn = document.getElementById('viewListBtn');
-        const listItemCountSpan = document.getElementById('list-item-count');
         const currentListItems = new Map();
-
-        // --- ALL FUNCTIONS DEFINED ONCE ---
-
+        
         const getListGroupedBySupplier = () => {
             const items = Array.from(shoppingList.querySelectorAll('li'));
             if (items.length === 0) {
@@ -189,17 +183,25 @@
             }
             shopperHTML += `</body></html>`;
             const dataUri = 'data:text/html;charset=utf-8,' + encodeURIComponent(shopperHTML);
+
+            // --- NEW: QR Code Robustness Check ---
+            if (dataUri.length > 4000) {
+                alert('Warnung: Die Einkaufsliste ist sehr lang. Der QR-Code könnte schwer zu scannen sein.');
+            }
+
             const qrModal = document.getElementById('qrModal');
             const qrcodeContainer = document.getElementById('qrcode');
             qrcodeContainer.innerHTML = '';
-            new QRCode(qrcodeContainer, { text: dataUri, width: 256, height: 256 });
-            qrModal.style.display = 'flex';
-        };
 
-        const updateListItemCount = () => {
-            listItemCountSpan.textContent = `(${currentListItems.size})`;
+            try {
+                new QRCode(qrcodeContainer, { text: dataUri, width: 256, height: 256 });
+                qrModal.style.display = 'flex';
+            } catch (error) {
+                console.error("QR Code generation failed:", error);
+                alert("Fehler bei der QR-Code-Erstellung. Stellen Sie sicher, dass Sie mit dem Internet verbunden sind.");
+            }
         };
-
+        
         const renderTabs = () => {
             tabsContainer.innerHTML = '';
             Object.keys(productCatalog).forEach(category => {
@@ -253,6 +255,10 @@
                     });
                 }
             }
+            // --- NEW: Empty Search Results Message ---
+            if (catalogContent.innerHTML === '') {
+                catalogContent.innerHTML = `<p style="padding: 20px; text-align: center;">Keine Ergebnisse für "${filter}" gefunden.</p>`;
+            }
         };
         
         const populateCategoryDropdown = () => {
@@ -273,11 +279,11 @@
             listItem.innerHTML = `<span>${name} <small>(${supplier})</small></span><input type="text" class="item-quantity" placeholder="z.B. 2 Kisten"><input type="text" class="item-notes" placeholder="Notiz (optional)"><button class="btn btn-danger list-item-remove-btn">X</button>`;
             shoppingList.appendChild(listItem);
             currentListItems.set(name, true);
-            updateListItemCount();
+            document.getElementById('list-item-count').textContent = `(${currentListItems.size})`;
             listItem.querySelector('.list-item-remove-btn').onclick = (e) => {
                 currentListItems.delete(e.target.closest('li').dataset.name);
                 e.target.closest('li').remove();
-                updateListItemCount();
+                document.getElementById('list-item-count').textContent = `(${currentListItems.size})`;
             };
         };
 
@@ -286,6 +292,14 @@
             const supplier = document.getElementById('newItemSupplier').value.trim() || 'Sonstige';
             const category = categorySelect.value;
             if (!name) { alert('Bitte geben Sie einen Artikelnamen ein.'); return; }
+
+            // --- NEW: Duplicate Item Check ---
+            const itemExists = Object.values(productCatalog).flat().some(item => item.name.toLowerCase() === name.toLowerCase());
+            if (itemExists) {
+                alert(`Ein Artikel mit dem Namen "${name}" existiert bereits.`);
+                return;
+            }
+
             productCatalog[category].push({ name, supplier });
             alert(`'${name}' wurde zur Kategorie '${category}' hinzugefügt.`);
             document.getElementById('newItemName').value = '';
@@ -344,7 +358,7 @@
             if (confirm('Möchten Sie die gesamte Liste wirklich leeren?')) {
                 shoppingList.innerHTML = '';
                 currentListItems.clear();
-                updateListItemCount();
+                document.getElementById('list-item-count').textContent = `(0)`;
             }
         });
         document.getElementById('printListBtn').addEventListener('click', generateAndPrintList);
@@ -353,7 +367,9 @@
         document.getElementById('shareQrBtn').addEventListener('click', shareViaQRCode);
         document.getElementById('closeModalBtn').addEventListener('click', () => document.getElementById('qrModal').style.display = 'none');
         document.getElementById('qrModal').addEventListener('click', (e) => { if(e.target.id === 'qrModal') document.getElementById('qrModal').style.display = 'none'; });
-
+        
+        const viewCatalogBtn = document.getElementById('viewCatalogBtn');
+        const viewListBtn = document.getElementById('viewListBtn');
         viewCatalogBtn.addEventListener('click', () => {
             document.body.classList.remove('view-list');
             viewListBtn.classList.remove('active');
